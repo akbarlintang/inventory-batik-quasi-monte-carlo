@@ -27,9 +27,35 @@ urlpatterns = [
     # path('inventory/', include('inventory.urls')),
 
     # Dashboard
+    path('', dashboard_view, name='dashboard'),
     path('dashboard/', dashboard_view, name='dashboard'),
     
     # Outlet
     path('outlet/', outlet_view, name='outlet.index'),
-    path('outlet/create', outlet_create_view, name='outlet.create')
+    path('outlet/create', outlet_create_view, name='outlet.create'),
+    path('outlet/update/<int:outlet_id>', outlet_update_view, name='outlet.update'),
+    path('outlet/delete/<int:outlet_id>', outlet_delete_view, name='outlet.delete'),
+    path('outlet/select/<outlet_id>', outlet_select_view, name='outlet.select'),
+    path('outlet/get', outlet_get_view, name='outlet.get'),
+
+    # Item
+    path('item/', item_view, name='item.index'),
+    path('item/create', item_create_view, name='item.create'),
+    path('item/update/<int:item_id>', item_update_view, name='item.update'),
+    path('item/delete/<int:item_id>', item_delete_view, name='item.delete'),
+
+    # Purchase
+    path('purchase/', purchase_view, name='purchase.index'),
+    path('purchase/create', purchase_create_view, name='purchase.create'),
+    path('purchase/update/<int:purchase_id>', purchase_update_view, name='purchase.update'),
+    path('purchase/delete/<int:purchase_id>', purchase_delete_view, name='purchase.delete'),
+
+    # Sales
+    path('sales/', sales_view, name='sales.index'),
+    path('sales/create', sales_create_view, name='sales.create'),
+    path('sales/update/<int:sales_id>', sales_update_view, name='sales.update'),
+    path('sales/delete/<int:sales_id>', sales_delete_view, name='sales.delete'),
+
+    # Transaction
+    path('transaction/', transaction_view, name='transaction.index'),
 ]
