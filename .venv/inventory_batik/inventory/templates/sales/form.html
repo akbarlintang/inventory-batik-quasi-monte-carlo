@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 
-{% block title %} Outlets {% endblock title %}
+{% block title %} Sales {% endblock title %}
 
 <!-- Specific CSS goes HERE -->
 {% block stylesheets %}
@@ -13,11 +13,7 @@
 
 <div class="pt-5">
     <div class="container">
-        <h1>Outlet Form</h1>
-
-        <div>
-            <a href="{% url 'outlet.index' %}" class="btn btn-success">Back to List</a>
-        </div>
+        <h1>Sales Form</h1>
 
         <br>
 
@@ -25,7 +21,7 @@
             <!-- meload package untuk merender form field -->
             {% load widget_tweaks %}
     
-            <form method="post" novalidate>
+            <form method="post" enctype="multipart/form-data" novalidate>
                 <!-- menambahkan csrf field untuk keamanan form -->
                 {% csrf_token %}
     
@@ -62,8 +58,13 @@
                     {% endif %}
                 </div>
                 {% endfor %}
-    
-                <button type="submit" class="btn btn-primary">Submit</button>
+
+                <span>
+                    <a href="{% url 'sales.index' %}" class="btn btn-danger">Kembali</a>
+                </span>
+                <span class="float-right">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </span>
             </form>
         </div>
 </div>

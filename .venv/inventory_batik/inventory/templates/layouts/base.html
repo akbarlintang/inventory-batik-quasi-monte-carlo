@@ -22,7 +22,7 @@
   <link rel="canonical" href="https://appseed.us/admin-dashboards/django-dashboard-argon">
   
   <title>
-    Django Argon Dashboard - {% block title %} Open-Source Admin Panel {% endblock %} | AppSeed
+    {% block title %}{% endblock %} | Sistem Inventory Batik
   </title>
 
   {% load static %}
@@ -67,6 +67,50 @@
   <script src="{% static 'assets/js/argon.js?v=1.2.0' %}"></script>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+
+  <script>
+    function selectOutlet(id){
+      var outletId = id;
+      axios.get("{% url 'outlet.select' 12345 %}".replace("12345", outletId))
+        .then(
+          response => {
+            location.reload()
+          }
+        ).catch(
+          e => {
+            "Terjadi Kesalahan"
+          }
+        )
+    }
+
+    var outletList = [];
+    function getOutlet(){
+      axios.get("{% url 'outlet.get' %}")
+        .then(
+          response => {
+            response.data.forEach((element, index) => {
+              console.log(element.fields)
+              $("#outlet-list").append('<li class="py-2">\
+              <a href="javascript:;" onclick="selectOutlet(\''+element.pk+'\')" class="text-white text-decoration-none">\
+                '+element.fields.name+'\
+              </a>\
+            </li>')
+            });
+          }
+        ).catch(
+          e => {
+            "Terjadi Kesalahan"
+          }
+        )
+    }
+
+    $( document ).ready(function() {
+      // init function
+      getOutlet();
+    });
+  </script>
 
 </body>
 
