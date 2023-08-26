@@ -1,3 +1,5 @@
+from __future__ import division
+
 from django.shortcuts import render
 from django.http import Http404
 from django.contrib import messages
@@ -8,6 +10,12 @@ from django.core import serializers
 from .models import *
 
 from .forms import *
+
+# import dependency pso dan periodic review
+import random
+import math
+from statistics import NormalDist
+from scipy.stats import norm
 
 # Dashboard
 def dashboard_view(request):
@@ -288,3 +296,143 @@ def transaction_view(request):
     }
 
     return render(request, 'transaction/index.html', context)
+
+# Periodic Review
+def periodic_view(request):
+    class Particle:
+        def __init__(self,x0):
+            self.position_i=[]          # particle position
+            self.velocity_i=[]          # particle velocity
+            self.pos_best_i=[]          # best position individual
+            self.err_best_i=-1          # best error individual
+            self.err_i=-1               # error individual
+
+            for i in range(0,num_dimensions):
+                self.velocity_i.append(random.uniform(-1,1))
+                self.position_i.append(x0[i])
+
+        # evaluate current fitness
+        def evaluate(self,costFunc):
+            self.err_i=costFunc(self.position_i)
+
+            # check to see if the current position is an individual best
+            if self.err_i < self.err_best_i or self.err_best_i==-1:
+                self.pos_best_i=self.position_i
+                self.err_best_i=self.err_i
+
+        # update new particle velocity
+        def update_velocity(self,pos_best_g):
+            w=0.5       # constant inertia weight (how much to weigh the previous velocity)
+            c1=1        # cognative constant
+            c2=2        # social constant
+
+            for i in range(0,num_dimensions):
+                r1=random.random()
+                r2=random.random()
+
+                vel_cognitive=c1*r1*(self.pos_best_i[i]-self.position_i[i])
+                vel_social=c2*r2*(pos_best_g[i]-self.position_i[i])
+                self.velocity_i[i]=w*self.velocity_i[i]+vel_cognitive+vel_social
+
+        # update the particle position based off new velocity updates
+        def update_position(self,bounds):
+            for i in range(0,num_dimensions):
+                self.position_i[i]=self.position_i[i]+self.velocity_i[i]
+
+                # adjust maximum position if necessary
+                if self.position_i[i]>bounds[i][1]:
+                    self.position_i[i]=bounds[i][1]
+
+                # adjust minimum position if neseccary
+                if self.position_i[i] < bounds[i][0]:
+                    self.position_i[i]=bounds[i][0]
+
+    class PSO():
+        def __new__(self,costFunc,x0,bounds,num_particles,maxiter):
+            global num_dimensions
+
+            num_dimensions=len(x0)
+            err_best_g=-1                   # best error for group
+            pos_best_g=[]                   # best position for group
+
+            # establish the swarm
+            swarm=[]
+            for i in range(0,num_particles):
+                swarm.append(Particle(x0))
+
+            # begin optimization loop
+            i=0
+            while i < maxiter:
+                #print i,err_best_g
+                # cycle through particles in swarm and evaluate fitness
+                for j in range(0,num_particles):
+                    swarm[j].evaluate(costFunc)
+
+                    # determine if current particle is the best (globally)
+                    if swarm[j].err_i < err_best_g or err_best_g == -1:
+                        pos_best_g=list(swarm[j].position_i)
+                        err_best_g=float(swarm[j].err_i)
+
+                # cycle through swarm and update velocities and position
+                for j in range(0,num_particles):
+                    swarm[j].update_velocity(pos_best_g)
+                    swarm[j].update_position(bounds)
+                i+=1
+
+            # print final results
+            # print ('FINAL:')
+            # print (pos_best_g)
+            # print (err_best_g)
+
+            return pos_best_g, err_best_g
+            
+    initial=[0,0]               # initial starting location [x1,x2...]
+    bounds=[(-10,10),(-10,10)]  # input bounds [(x1_min,x1_max),(x2_min,x2_max)...]
+    pos, err = PSO(func1,initial,bounds,num_particles=15,maxiter=30)
+
+    context = {
+        'pos': pos,
+        'err': err
+    }
+
+    # return HttpResponse(data)
+
+    return render(request, 'periodic/index.html', context)
+
+# Fungsi Review Interval (R)
+def func1(x):
+    # Deklarasi variabel
+    biaya_pesan = 55797 # A
+    permintaan_baku = 3485.7 # D
+    biaya_simpan = 113258 # h
+    biaya_kekurangan = 141952 # Cu
+    lead_time = 0.2 # L
+    standar_deviasi = 16.319 # S
+    harga_material = 80145 # p
+
+    # Hitung nilai To
+    to = math.sqrt((2 * biaya_pesan) / (permintaan_baku * biaya_simpan))
+
+    # Hitung nilai alpha dan R
+    alpha = to * biaya_simpan / biaya_kekurangan
+    z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
+
+    fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
+    # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
+    wz_alpha = round((fz_alpha - 0.00001), 5)
+
+    R = round((permintaan_baku * to) + (permintaan_baku * lead_time) + (z_alpha * (math.sqrt(to + lead_time))))
+
+    # Hitung total biaya total persediaan
+    N = math.ceil(standar_deviasi * ((math.sqrt(to + lead_time)) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
+
+    T = (permintaan_baku * harga_material) + (biaya_pesan / to) + (biaya_simpan * (R - (permintaan_baku * lead_time) + (permintaan_baku * to / 2))) + (biaya_kekurangan / to * N)
+
+    # Hitung nilai XR, XRL, dan sigma_RL
+    XR = to * permintaan_baku
+    XRL = (to + lead_time) * permintaan_baku
+    sigma_RL = (to + lead_time) * standar_deviasi
+
+    # Qp = 1.3 * XR ** 0.494 * (biaya_pesan / )
+
+    return sigma_RL

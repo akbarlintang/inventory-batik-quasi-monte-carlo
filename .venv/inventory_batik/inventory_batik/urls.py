@@ -58,4 +58,7 @@ urlpatterns = [
 
     # Transaction
     path('transaction/', transaction_view, name='transaction.index'),
+
+    # Periodic Review
+    path('periodic/', periodic_view, name='periodic.index'),
 ]
