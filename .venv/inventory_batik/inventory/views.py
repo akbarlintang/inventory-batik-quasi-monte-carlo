@@ -166,6 +166,8 @@ def purchase_view(request):
             purchases = Purchase.objects.all()
         else:
             purchases = Purchase.objects.filter(outlet_id=request.session['outlet_id'])
+    else:
+        purchases = Purchase.objects.all()
 
     context = {
         'purchases': purchases
@@ -224,6 +226,8 @@ def sales_view(request):
             sales = Sales.objects.all()
         else:
             sales = Sales.objects.filter(outlet_id=request.session['outlet_id'])
+    else:
+        sales = Sales.objects.all()
 
     context = {
         'sales': sales
@@ -282,6 +286,8 @@ def transaction_view(request):
             transactions = Transaction.objects.all()
         else:
             transactions = Transaction.objects.filter(outlet_id=request.session['outlet_id'])
+    else:
+        transactions = Transaction.objects.all()
     
     context = {
         'transactions': transactions
