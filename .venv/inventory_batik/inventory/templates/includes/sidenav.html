@@ -52,6 +52,12 @@
           </li>
 
           <li class="nav-item">
+            <a class="nav-link {% if 'export' in request.path %} active {% endif %}" href="{% url 'export.index' %}">
+              <i class="ni ni-chart-pie-35 text-yellow"></i>
+              <span class="nav-link-text">Export Data</span>
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link {% if 'periodic' in request.path %} active {% endif %}" href="{% url 'periodic.index' %}">
               <i class="ni ni-chart-pie-35 text-yellow"></i>
               <span class="nav-link-text">Periodic Review</span>

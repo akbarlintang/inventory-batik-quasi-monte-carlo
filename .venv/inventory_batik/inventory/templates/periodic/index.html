@@ -33,16 +33,35 @@
 
         <br>
         
-        <div>
-            asd
-        </div>
-        <div>
-            {{ pos }}
-        </div>
-
-        <div>
-            {{ err }}
-        </div>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No.</th>
+                    <th width="20%" class="text-center">Nama Barang</th>
+                    <th width="45%" class="text-center">Reorder Point (s)</th>
+                    <th width="20%" class="text-center">Stok Maksimum (S)</th>
+                    <th width="20%" class="text-center">Review Interval (R) (hari)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- daftar task-->
+                {% if data %}
+                {% for dt in data %}
+                <tr>
+                    <td class="text-center">{{ forloop.counter }}</td>
+                    <td>{{ dt.nama_barang }}</td>
+                    <td class="text-center">{{ dt.s }}</td>
+                    <td class="text-center">{{ dt.S }}</td>
+                    <td class="text-center">{{ dt.To }}</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5">Data tidak ditemukan.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
     </div>
 </div>
 

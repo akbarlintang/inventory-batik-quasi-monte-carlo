@@ -59,6 +59,10 @@ urlpatterns = [
     # Transaction
     path('transaction/', transaction_view, name='transaction.index'),
 
+    # Export
+    path('export/', export_view, name='export.index'),
+    path('export/excel', export_excel_csv, name='export.excel'),
+
     # Periodic Review
     path('periodic/', periodic_view, name='periodic.index'),
 ]
