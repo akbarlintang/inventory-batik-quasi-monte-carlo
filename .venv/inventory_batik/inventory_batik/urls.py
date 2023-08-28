@@ -44,6 +44,12 @@ urlpatterns = [
     path('item/update/<int:item_id>', item_update_view, name='item.update'),
     path('item/delete/<int:item_id>', item_delete_view, name='item.delete'),
 
+    # Product
+    path('product/', product_view, name='product.index'),
+    path('product/create', product_create_view, name='product.create'),
+    path('product/update/<int:product_id>', product_update_view, name='product.update'),
+    path('product/delete/<int:product_id>', product_delete_view, name='product.delete'),
+
     # Purchase
     path('purchase/', purchase_view, name='purchase.index'),
     path('purchase/create', purchase_create_view, name='purchase.create'),
@@ -61,7 +67,6 @@ urlpatterns = [
 
     # Export
     path('export/', export_view, name='export.index'),
-    path('export/excel', export_excel_csv, name='export.excel'),
 
     # Periodic Review
     path('periodic/', periodic_view, name='periodic.index'),

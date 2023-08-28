@@ -93,7 +93,7 @@ class SalesForm(ModelForm):
         labels = {
             'outlet': _('Pilih Outlet'),
             'Item': _('Pilih Barang'),
-            'price': _('Harga Beli'),
+            'price': _('Harga Jual'),
             'amount': _('Jumlah Pembelian'),
             'unit': _('Satuan Barang'),
         }

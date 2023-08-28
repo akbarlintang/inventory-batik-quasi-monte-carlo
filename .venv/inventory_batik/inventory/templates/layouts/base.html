@@ -91,7 +91,6 @@
         .then(
           response => {
             response.data.forEach((element, index) => {
-              console.log(element.fields)
               $("#outlet-list").append('<li class="py-2">\
               <a href="javascript:;" onclick="selectOutlet(\''+element.pk+'\')" class="text-white text-decoration-none">\
                 '+element.fields.name+'\

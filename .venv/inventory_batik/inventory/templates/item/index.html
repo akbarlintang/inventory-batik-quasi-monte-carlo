@@ -45,7 +45,6 @@
                     <th class="text-center">Nama</th>
                     <th class="text-center">Deskripsi</th>
                     <th class="text-center">Harga</th>
-                    <th class="text-center">Tipe</th>
                     <th class="text-center">Aksi</th>
                 </tr>
             </thead>
@@ -59,7 +58,6 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.description }}</td>
                     <td class="text-right">Rp {{ item.price }}</td>
-                    <td>{{ item.type }}</td>
                     <td class="text-center">
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
                         <a href="{% url 'item.update' item.id %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
