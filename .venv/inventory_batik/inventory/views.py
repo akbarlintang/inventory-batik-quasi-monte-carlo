@@ -312,6 +312,70 @@ def purchase_delete_view(request, purchase_id):
     except Purchase.DoesNotExist:
         raise Http404("Pembelian tidak ditemukan.")
 
+# Production
+def production_view(request):
+    if request.session.has_key('outlet_id'):
+        if request.session['outlet_id'] == 'all':
+            productions = Production.objects.all()
+        else:
+            productions = Production.objects.filter(outlet_id=request.session['outlet_id'])
+    else:
+        productions = Production.objects.all()
+
+    context = {
+        'productions': productions
+    }
+
+    return render(request, 'production/index.html', context)
+
+def production_create_view(request):
+    if request.method == 'POST':
+        form = ProductionForm(request.POST)
+        if form.is_valid():
+            temp = form.save()
+
+            # Simpan stock dari production
+            try:
+                obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
+                obj.amount = int(obj.amount) + int(request.POST.get('amount',''))
+                obj.save()
+            except Stock.DoesNotExist:
+                Stock.objects.create(
+                    item_id = request.POST.get('item',''),
+                    outlet_id = request.POST.get('outlet',''),
+                    amount = request.POST.get('amount',''),
+                )
+
+            messages.success(request, 'Sukses menambah produksi baru.')
+            return redirect('production.index')
+    else:
+        form = ProductionForm()
+    return render(request, 'production/form.html', {'form': form})
+
+def production_update_view(request, production_id):
+    try:
+        production = Production.objects.get(pk=production_id)
+    except Production.DoesNotExist:
+        raise Http404("Produksi tidak ditemukan.")
+    if request.method == 'POST':
+        form = ProductionForm(request.POST, instance=production)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Sukses Mengubah Produksi.')
+            return redirect('production.index')
+    else:
+        form = ProductionForm(instance=production)
+    return render(request, 'production/form.html', {'form': form})
+
+def production_delete_view(request, production_id):
+    try:
+        production = Production.objects.get(pk=production_id)
+        production.delete()
+        messages.success(request, 'Sukses menghapus pembelian.')
+        return redirect('production.index')
+    except Production.DoesNotExist:
+        raise Http404("Pembelian tidak ditemukan.")
+
 # Sales
 def sales_view(request):
     if request.session.has_key('outlet_id'):
@@ -342,7 +406,7 @@ def sales_create_view(request):
                 type = 'sales'
             )
 
-            messages.success(request, 'Sukses menambah pembelian baru.')
+            messages.success(request, 'Sukses menambah penjualan baru.')
             return redirect('sales.index')
     else:
         form = SalesForm()
@@ -352,12 +416,12 @@ def sales_update_view(request, sales_id):
     try:
         sales = Sales.objects.get(pk=sales_id)
     except Sales.DoesNotExist:
-        raise Http404("Pembelian tidak ditemukan.")
+        raise Http404("Penjualan tidak ditemukan.")
     if request.method == 'POST':
         form = SalesForm(request.POST, instance=sales)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Sukses Mengubah pembelian.')
+            messages.success(request, 'Sukses Mengubah penjualan.')
             return redirect('sales.index')
     else:
         form = SalesForm(instance=sales)
@@ -367,10 +431,10 @@ def sales_delete_view(request, sales_id):
     try:
         sales = Sales.objects.get(pk=sales_id)
         sales.delete()
-        messages.success(request, 'Sukses menghapus pembelian.')
+        messages.success(request, 'Sukses menghapus penjualan.')
         return redirect('sales.index')
     except Sales.DoesNotExist:
-        raise Http404("Pembelian tidak ditemukan.")
+        raise Http404("Penjualan tidak ditemukan.")
 
 # Transaction
 def transaction_view(request):

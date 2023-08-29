@@ -56,6 +56,12 @@ urlpatterns = [
     path('purchase/update/<int:purchase_id>', purchase_update_view, name='purchase.update'),
     path('purchase/delete/<int:purchase_id>', purchase_delete_view, name='purchase.delete'),
 
+    # Production
+    path('production/', production_view, name='production.index'),
+    path('production/create', production_create_view, name='production.create'),
+    path('production/update/<int:production_id>', production_update_view, name='production.update'),
+    path('production/delete/<int:production_id>', production_delete_view, name='production.delete'),
+
     # Sales
     path('sales/', sales_view, name='sales.index'),
     path('sales/create', sales_create_view, name='sales.create'),

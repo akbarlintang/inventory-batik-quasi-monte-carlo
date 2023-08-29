@@ -53,6 +53,26 @@ class Sales(models.Model):
     class Meta:
         db_table = 'sales'
 
+class Production(models.Model):
+    outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    amount = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'productions'
+
+class Stock(models.Model):
+    outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    amount = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'stocks'
+
 class Transaction(models.Model):
     outlet = models.ForeignKey(Outlet, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)

@@ -86,6 +86,27 @@ class PurchaseForm(ModelForm):
             },
         }
 
+class ProductionForm(ModelForm):
+    class Meta:
+        model = Sales
+        fields = ('outlet', 'item', 'amount')
+        labels = {
+            'outlet': _('Pilih Outlet'),
+            'Item': _('Pilih Barang'),
+            'amount': _('Jumlah Pembelian'),
+        }
+        error_messages = {
+            'outlet': {
+                'required': _("Outlet harus diisi."),
+            },
+            'item': {
+                'required': _("Item harus diisi."),
+            },
+            'amount': {
+                'required': _("Jumlah item harus diisi."),
+            },
+        }
+
 class SalesForm(ModelForm):
     class Meta:
         model = Sales
