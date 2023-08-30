@@ -88,7 +88,7 @@ class PurchaseForm(ModelForm):
 
 class ProductionForm(ModelForm):
     class Meta:
-        model = Sales
+        model = Production
         fields = ('outlet', 'item', 'amount')
         labels = {
             'outlet': _('Pilih Outlet'),

@@ -68,6 +68,9 @@ urlpatterns = [
     path('sales/update/<int:sales_id>', sales_update_view, name='sales.update'),
     path('sales/delete/<int:sales_id>', sales_delete_view, name='sales.delete'),
 
+    # Stocks
+    path('stock/', stock_view, name='stock.index'),
+
     # Transaction
     path('transaction/', transaction_view, name='transaction.index'),
 

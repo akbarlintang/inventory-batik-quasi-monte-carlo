@@ -220,13 +220,13 @@ def product_create_view(request):
             new_task.save()
             # mengeset pesan sukses dan redirect ke halaman daftar task
             messages.success(request, 'Sukses Menambah Item baru.')
-            return redirect('item.index')
+            return redirect('product.index')
     # Jika method-nya bukan POST
     else:
         # membuat objek dari class TaskForm
         form = ItemForm()
     # merender template form dengan memparsing data form
-    return render(request, 'item/form.html', {'form': form})
+    return render(request, 'product/form.html', {'form': form})
 
 def product_update_view(request, product_id):
     try:
@@ -238,17 +238,17 @@ def product_update_view(request, product_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Sukses Mengubah Item.')
-            return redirect('item.index')
+            return redirect('product.index')
     else:
         form = ItemForm(instance=item)
-    return render(request, 'item/form.html', {'form': form})
+    return render(request, 'product/form.html', {'form': form})
 
 def product_delete_view(request, product_id):
     try:
         item = Item.objects.get(pk=product_id)
         item.delete()
         messages.success(request, 'Sukses Menghapus Item.')
-        return redirect('item.index')
+        return redirect('product.index')
     except Item.DoesNotExist:
         raise Http404("Item tidak ditemukan.")
 
@@ -256,9 +256,9 @@ def product_delete_view(request, product_id):
 def purchase_view(request):
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            purchases = Purchase.objects.all()
+            purchases = Purchase.objects.all().order_by('-created_at')
         else:
-            purchases = Purchase.objects.filter(outlet_id=request.session['outlet_id'])
+            purchases = Purchase.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
     else:
         purchases = Purchase.objects.all()
 
@@ -316,9 +316,9 @@ def purchase_delete_view(request, purchase_id):
 def production_view(request):
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            productions = Production.objects.all()
+            productions = Production.objects.all().order_by('-created_at')
         else:
-            productions = Production.objects.filter(outlet_id=request.session['outlet_id'])
+            productions = Production.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
     else:
         productions = Production.objects.all()
 
@@ -332,7 +332,7 @@ def production_create_view(request):
     if request.method == 'POST':
         form = ProductionForm(request.POST)
         if form.is_valid():
-            temp = form.save()
+            form.save()
 
             # Simpan stock dari production
             try:
@@ -360,7 +360,23 @@ def production_update_view(request, production_id):
     if request.method == 'POST':
         form = ProductionForm(request.POST, instance=production)
         if form.is_valid():
-            form.save()
+            # prod = Production.objects.get(id=form.id)
+            return HttpResponse(request.POST.get('pk',''))
+            temp = form.save()
+
+            # Simpan stock dari production
+            try:
+                obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
+                return HttpResponse(prod.amount)
+                obj.amount = int(obj.amount) - int(prod.amount) + int(request.POST.get('amount',''))
+                obj.save()
+            except Stock.DoesNotExist:
+                Stock.objects.create(
+                    item_id = request.POST.get('item',''),
+                    outlet_id = request.POST.get('outlet',''),
+                    amount = request.POST.get('amount',''),
+                )
+            
             messages.success(request, 'Sukses Mengubah Produksi.')
             return redirect('production.index')
     else:
@@ -380,9 +396,9 @@ def production_delete_view(request, production_id):
 def sales_view(request):
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            sales = Sales.objects.all()
+            sales = Sales.objects.all().order_by('-created_at')
         else:
-            sales = Sales.objects.filter(outlet_id=request.session['outlet_id'])
+            sales = Sales.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
     else:
         sales = Sales.objects.all()
 
@@ -406,6 +422,18 @@ def sales_create_view(request):
                 type = 'sales'
             )
 
+            # Simpan stock dari production
+            try:
+                obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
+                obj.amount = int(obj.amount) - int(request.POST.get('amount',''))
+                obj.save()
+            except Stock.DoesNotExist:
+                Stock.objects.create(
+                    item_id = request.POST.get('item',''),
+                    outlet_id = request.POST.get('outlet',''),
+                    amount = request.POST.get('amount',''),
+                )
+
             messages.success(request, 'Sukses menambah penjualan baru.')
             return redirect('sales.index')
     else:
@@ -421,6 +449,19 @@ def sales_update_view(request, sales_id):
         form = SalesForm(request.POST, instance=sales)
         if form.is_valid():
             form.save()
+
+            # Simpan stock dari production
+            try:
+                obj = Stock.objects.get(outlet=request.POST.get('outlet',''), item=request.POST.get('item',''))
+                obj.amount = int(obj.amount) - int(request.POST.get('amount',''))
+                obj.save()
+            except Stock.DoesNotExist:
+                Stock.objects.create(
+                    item_id = request.POST.get('item',''),
+                    outlet_id = request.POST.get('outlet',''),
+                    amount = request.POST.get('amount',''),
+                )
+
             messages.success(request, 'Sukses Mengubah penjualan.')
             return redirect('sales.index')
     else:
@@ -440,9 +481,9 @@ def sales_delete_view(request, sales_id):
 def transaction_view(request):
     if request.session.has_key('outlet_id'):
         if request.session['outlet_id'] == 'all':
-            transactions = Transaction.objects.all()
+            transactions = Transaction.objects.all().order_by('-created_at')
         else:
-            transactions = Transaction.objects.filter(outlet_id=request.session['outlet_id'])
+            transactions = Transaction.objects.filter(outlet_id=request.session['outlet_id']).order_by('-created_at')
     else:
         transactions = Transaction.objects.all()
     
@@ -451,6 +492,22 @@ def transaction_view(request):
     }
 
     return render(request, 'transaction/index.html', context)
+
+# Stocks
+def stock_view(request):
+    if request.session.has_key('outlet_id'):
+        if request.session['outlet_id'] == 'all':
+            stocks = Stock.objects.all()
+        else:
+            stocks = Stock.objects.filter(outlet_id=request.session['outlet_id'])
+    else:
+        stocks = Stock.objects.all()
+    
+    context = {
+        'stocks': stocks
+    }
+
+    return render(request, 'stock/index.html', context)
 
 # Export
 def export_view(request):
@@ -502,39 +559,6 @@ def periodic_view(request):
         lead_time = 0.2 # L
         standar_deviasi = 16.319 # S
         # harga_material = 80145 # p
-
-        # # Array 1
-        # array_data = {}
-        # array_data['nama_barang'] = 'Batik A'
-        # array_data['biaya_pesan'] = 55797
-        # array_data['permintaan_baku'] = 3485.7
-        # array_data['biaya_simpan'] = 113258
-        # array_data['biaya_kekurangan'] = 141952
-        # array_data['harga_material'] = 80145
-
-        # array.append(array_data)
-
-        # # Array 2
-        # array_data = {}
-        # array_data['nama_barang'] = 'Batik B'
-        # array_data['biaya_pesan'] = 56000
-        # array_data['permintaan_baku'] = 3490
-        # array_data['biaya_simpan'] = 120000
-        # array_data['biaya_kekurangan'] = 150000
-        # array_data['harga_material'] = 87000
-
-        # array.append(array_data)
-
-        # # Array 3
-        # array_data = {}
-        # array_data['nama_barang'] = 'Tas Batik'
-        # array_data['biaya_pesan'] = 35000
-        # array_data['permintaan_baku'] = 3000
-        # array_data['biaya_simpan'] = 90000
-        # array_data['biaya_kekurangan'] = 100000
-        # array_data['harga_material'] = 65000
-
-        # array.append(array_data)
 
         for x in array:
             nama_barang = x['nama_barang']

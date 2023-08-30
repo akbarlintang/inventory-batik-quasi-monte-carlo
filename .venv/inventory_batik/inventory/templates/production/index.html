@@ -46,28 +46,26 @@
                     {% endif %}
                     <th class="text-center">Kode Item</th>
                     <th class="text-center">Nama</th>
-                    <th class="text-center">Harga Beli</th>
                     <th class="text-center">Jumlah</th>
                     <th class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 <!-- daftar task-->
-                {% if purchases %}
-                {% for purchase in purchases %}
+                {% if productions%}
+                {% for production in productions%}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
                     {% if request.session.outlet_id == 'all' %}
-                        <td>{{ purchase.outlet.name }}</td>
+                        <td>{{ production.outlet.name }}</td>
                     {% endif %}
-                    <td>{{ purchase.item.code }}</td>
-                    <td>{{ purchase.item.name }}</td>
-                    <td class="text-right">Rp {{ purchase.price }}</td>
-                    <td class="text-right">{{ purchase.amount }} {{ purchase.unit }}</td>
+                    <td>{{ production.item.code }}</td>
+                    <td>{{ production.item.name }}</td>
+                    <td class="text-right">{{ production.amount }} {{ production.unit }}</td>
                     <td class="text-center">
                         <!-- <a href="#" class="btn btn-primary btn-sm"><i class="fa fa-file"></i></a> -->
-                        <a href="{% url 'purchase.update' purchase.id %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
-                        <a href="{% url 'purchase.delete' purchase.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i class="fa fa-trash"></i></a>
+                        <a href="{% url 'production.update' production.id %}" class="btn btn-warning btn-sm"><i class="fa fa-edit"></i></a>
+                        <a href="{% url 'production.delete' production.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Apakah yakin akan menghapus pembelian ini?')"><i class="fa fa-trash"></i></a>
                     </td>
                 </tr>
                 {% endfor %}
