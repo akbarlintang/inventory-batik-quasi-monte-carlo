@@ -37,7 +37,7 @@
 
         <br>
 
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped" id="datatable">
             <thead>
                 <tr>
                     <th width="5%" class="text-center">ID</th>
@@ -90,5 +90,9 @@
 
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.min.js' %}"></script>
 <script src="{% static '/assets/vendor/chart.js/dist/Chart.extension.js' %}"></script>
+
+<script>
+    let table = new DataTable('#datatable');
+</script>
 
 {% endblock javascripts %}

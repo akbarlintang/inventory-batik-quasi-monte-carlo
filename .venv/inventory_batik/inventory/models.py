@@ -19,6 +19,8 @@ class Item(models.Model):
     image = models.ImageField(upload_to="img/items/", null=True, blank=True)
     description = models.TextField()
     price = models.IntegerField()
+    biaya_pesan = models.IntegerField(default=None, null=True)
+    lead_time = models.IntegerField(default=None, null=True)
     type = models.CharField(max_length=255, choices=ItemTypes.choices(), default=ItemTypes.MENTAH)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

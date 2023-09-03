@@ -20,6 +20,7 @@ import random
 import math
 from statistics import NormalDist
 from scipy.stats import norm
+from statistics import stdev
 
 # Dashboard
 def dashboard_view(request):
@@ -516,10 +517,28 @@ def export_view(request):
         response['Content-Disposition'] = 'attachment; filename="ExportData.csv"'        
         writer = csv.writer(response)
         writer.writerow(['Sales Data'])
-        writer.writerow(['No', 'Nama Barang','Biaya Pesan','Permintaan Bahan Baku','Biaya Simpan','Biaya Kekurangan','Harga Material','Lead Time Pemenuhan'])
+        writer.writerow(['No', 'Nama Barang','Biaya Pesan','Permintaan Bahan Baku','Biaya Simpan','Biaya Kekurangan','Harga Produk','Lead Time Pemenuhan', 'Standar Deviasi'])
         items = Item.objects.filter(type="JADI").all()
         for idx, item in enumerate(items):
-            row = [idx+1, item.name, 50000, 80000, 100000, 150000, 90000, 20]
+            sales = Sales.objects.all().filter(item_id=item.id)
+
+            # return HttpResponse(len(sales))
+            sales_count = 0
+            sales_list = []
+
+            for sale in sales:
+                sales_count += sale.amount
+                sales_list.append(sale.amount)
+
+            biaya_kekurangan = (item.price * 7.5 / 100) + item.price
+            n = len(sales_list)
+            if n < 2:
+                standar_deviasi = sales_list[0]
+            else:
+                standar_deviasi = stdev(sales_list)
+            
+            # Write row excel
+            row = [idx+1, item.name, item.biaya_pesan, sales_count, 225805, biaya_kekurangan, item.price, item.lead_time, standar_deviasi]
             writer.writerow(row)
         return response
     
@@ -547,18 +566,9 @@ def periodic_view(request):
             array_data['biaya_kekurangan'] = dt[5]
             array_data['harga_material'] = dt[6]
             array_data['lead_time'] = dt[7] / 100
+            array_data['standar_deviasi'] = dt[8]
 
             array.append(array_data)
-
-        # return HttpResponse(array)
-        # Deklarasi variabe
-        # biaya_pesan = 55797 # A
-        # permintaan_baku = 3485.7 # D
-        # biaya_simpan = 113258 # h
-        # biaya_kekurangan = 141952 # Cu
-        lead_time = 0.2 # L
-        standar_deviasi = 16.319 # S
-        # harga_material = 80145 # p
 
         for x in array:
             nama_barang = x['nama_barang']
@@ -568,6 +578,7 @@ def periodic_view(request):
             biaya_kekurangan = x['biaya_kekurangan']
             harga_material = x['harga_material']
             lead_time = x['lead_time']
+            standar_deviasi = x['standar_deviasi']
             
             class Particle:
                 def __init__(self,x0):

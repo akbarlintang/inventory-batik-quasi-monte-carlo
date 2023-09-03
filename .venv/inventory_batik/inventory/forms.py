@@ -29,7 +29,7 @@ class ItemForm(ModelForm):
         # merelasikan form dengan model
         model = Item
         # mengeset field apa saja yang akan ditampilkan pada form
-        fields = ('code', 'name', 'image', 'description', 'price', 'type')
+        fields = ('code', 'name', 'image', 'description', 'price', 'type', 'biaya_pesan', 'lead_time')
         # mengatur teks label untuk setiap field
         labels = {
             'code': _('Kode Item'),
@@ -37,6 +37,8 @@ class ItemForm(ModelForm):
             'description': _('Deskripsi Item'),
             'price': _('Harga Item'),
             'type': _('Tipe Item'),
+            'biaya_pesan': _('Biaya Pesan Item'),
+            'lead_time': _('Lead Time Pemenuhan Item'),
         }
         # mengatur teks pesan error untuk setiap validasi fieldnya
         error_messages = {
@@ -54,6 +56,12 @@ class ItemForm(ModelForm):
             },
             'type': {
                 'required': _("Tipe item harus diisi."),
+            },
+            'biaya_pesan': {
+                'required': _("Biaya pesan item harus diisi."),
+            },
+            'lead_time': {
+                'required': _("Lead Time pemenuhan item harus diisi."),
             },
         }
 

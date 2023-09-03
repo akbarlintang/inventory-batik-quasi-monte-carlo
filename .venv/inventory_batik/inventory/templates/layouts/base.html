@@ -43,6 +43,9 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
+  <!-- Datatables -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+
   <!-- Specific CSS goes HERE -->
   {% block stylesheets %}{% endblock stylesheets %}
 
@@ -62,13 +65,14 @@
   {% include "includes/scripts.html" %}
 
   <!-- Specific JS goes HERE --> 
-  {% block javascripts %}{% endblock javascripts %}
-
   <script src="{% static 'assets/js/argon.js?v=1.2.0' %}"></script>
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+
+  <!-- Datatables -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 
   <script>
     function selectOutlet(id){
@@ -111,6 +115,7 @@
     });
   </script>
 
+  {% block javascripts %}{% endblock javascripts %}
 </body>
 
 </html>
