@@ -1,1 +1,0 @@
-# inventory-batik-quasi-monte-carlo
