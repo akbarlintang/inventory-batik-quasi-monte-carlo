@@ -44,15 +44,18 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- daftar task-->
                 {% if data %}
                 {% for dt in data %}
                 <tr>
                     <td class="text-center">{{ forloop.counter }}</td>
-                    <td>{{ dt.nama_barang }}</td>
+                    <!-- <td>{{ dt.nama_barang }}</td>
                     <td class="text-center">{{ dt.s }}</td>
                     <td class="text-center">{{ dt.S }}</td>
-                    <td class="text-center">{{ dt.To }}</td>
+                    <td class="text-center">{{ dt.To }}</td> -->
+                    <td>{{ dt.nama_barang }}</td>
+                    <td class="text-center">{{ dt.mc_result }}</td>
+                    <td class="text-center">{{ dt.total_biaya_penyimpanan }}</td>
+                    <td class="text-center">Rp {{ dt.biaya_penyimpanan }}</td>
                 </tr>
                 {% endfor %}
                 {% else %}
@@ -62,6 +65,13 @@
                 {% endif %}
             </tbody>
         </table>
+
+        <!-- {% for dt in data %} -->
+            <!-- <div>
+                {{ dt.nilai_optimum }}
+            </div> -->
+            <img class="responsive-img" src='data:image/png;base64,{{ simulation_profit_plot }}'>
+        <!-- {% endfor %} -->
     </div>
 </div>
 
