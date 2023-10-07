@@ -24,7 +24,7 @@ from statistics import stdev
 import os
 import io, base64
 import seaborn as sns
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 sns.set_style('whitegrid')
 
@@ -618,7 +618,8 @@ def monte_carlo(M, product, review_period=30):
     product_mc["lead_time"] = product['lead_time']
     product_mc["standar_deviasi"] = product['standar_deviasi']
     
-    # lead_time = product["lead_time"]
+    demand_list = []
+
     mean = product["permintaan_baku"] / 30
     sd = product["standar_deviasi"]
 
@@ -627,12 +628,15 @@ def monte_carlo(M, product, review_period=30):
     for day in range(1, 365):
         day_demand = round(daily_demand(mean, sd))
 
-        if day_demand >= 0:
+        if day_demand > 0:
             total_demand += day_demand
-    
+            demand_list.append(day_demand)
+        else:
+            demand_list.append(0)
+
     product_mc["permintaan_baku"] = total_demand
     
-    return product_mc
+    return product_mc, demand_list
 
 def calculate_profit(data, product):
     unit_cost = product["harga_produk"]
@@ -651,16 +655,18 @@ def calculate_profit(data, product):
 
     return profit
 
-def mc_simulation(product, M, num_simulations=10):
+def mc_simulation(product, M, num_simulations):
     total_biaya_penyimpanan_list = []
+    to_penyimpanan_list = []
     for sim in range(num_simulations):
-        data = monte_carlo(M, product)
+        data, demand_result = monte_carlo(M, product)
 
         # Calculating total biaya penyimpanan
-        total_biaya_penyimpanan = per_review(data)
-        total_biaya_penyimpanan_list.append(total_biaya_penyimpanan)
+        total_biaya_penyimpanan, to_penyimpanan = per_review(data)
+        total_biaya_penyimpanan_list.append(round(total_biaya_penyimpanan))
+        to_penyimpanan_list.append(to_penyimpanan)
 
-    return total_biaya_penyimpanan_list
+    return total_biaya_penyimpanan_list, to_penyimpanan_list
 
 def p_review(product, low, high, step=50):
     m_range = [i for i in range(low, high, step)]
@@ -729,7 +735,69 @@ def per_review(product):
     #         index = idx
     #         break
 
-    return T
+    return T, to
+
+def find_rss(to, product):
+    # Hitung nilai alpha dan R
+    alpha = to * product["biaya_simpan"] / product["biaya_kekurangan"]
+    z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
+
+    fz_alpha = round(norm.pdf(2.22 , loc = 0 , scale = 1 ), 5)
+    # wz_alpha = fz_alpha - (z_alpha * (1 - fz_alpha))
+    wz_alpha = round((fz_alpha - 0.00001), 5)
+
+    R = round((product["permintaan_baku"] * to) + (product["permintaan_baku"] * product["lead_time"]) + (z_alpha * (math.sqrt(to + product["lead_time"]))))
+
+    # Hitung total biaya total persediaan
+    N = math.ceil(product["standar_deviasi"] * ((math.sqrt(to + product["lead_time"])) * ((fz_alpha - (z_alpha * wz_alpha)) * -1)))
+
+    T = (product["permintaan_baku"] * product["harga_produk"]) + (product["biaya_pesan"] / to) + (product["biaya_simpan"] * (R - (product["permintaan_baku"] * product["lead_time"]) + (product["permintaan_baku"] * to / 2))) + (product["biaya_kekurangan"] / to * N)
+
+    # Hitung nilai XR, XRL, dan sigma_RL
+    XR = to * product["permintaan_baku"]
+    XRL = (to + product["lead_time"]) * product["permintaan_baku"]
+    sigma_RL = (to + product["lead_time"]) * product["standar_deviasi"]
+
+    Qp = round(1.3 * (XR ** 0.494) * ((product["biaya_pesan"] / product["biaya_simpan"]) ** 0.506) * ((1 + ((sigma_RL ** 2) / (XR ** 2))) ** 0.116))
+    z = round(math.sqrt((Qp * product["biaya_simpan"]) / (sigma_RL * product["biaya_kekurangan"])), 2)
+    Sp = round((0.973 * XRL) + (sigma_RL * ((0.183 / z) + 1.063 - (2.192 * z))), 2)
+
+    k = round(product["biaya_simpan"] / (product["biaya_simpan"] + product["biaya_kekurangan"]), 2)
+
+    So = round(XRL + (k * sigma_RL))
+
+    R = round(to * 1000)
+    s = round(Sp)
+    S = round(Sp + Qp)
+
+    return R, s, S
+
+def calculate_inv_level(demand_result, R_min, s_min, S_min):
+    inventory_level = []
+
+    stock = 0
+    stockout = 0
+    counter = 0
+
+    for day, x in enumerate(demand_result):
+        counter += 1
+
+        if x > 0:
+            # Placing the order
+            if stock >= x:
+                stock -= x
+            else:
+                stockout += 1
+
+        if counter == R_min:
+            # Restocking day
+            if stock <= s_min:
+                stock = s_min
+                counter = 0
+        
+        inventory_level.append(stock)
+    
+    return inventory_level
 
 # Periodic Review
 def periodic_view(request):
@@ -754,8 +822,8 @@ def periodic_view(request):
             array.append(array_data)
 
         # define var
-        iteration_h = 10
-        simulation_num = 10
+        iteration_h = 100
+        simulation_num = 100
 
         global iteration_halton
         global halton_result
@@ -763,18 +831,6 @@ def periodic_view(request):
         halton_result = getHalton(iteration_h)
 
         iteration_halton = iteration_h
-
-        simulation_biaya = []
-        tp_list_product = []
-        monte_carlo_product = []
-        img_monte_carlo_product = []
-        review_product = []
-        review_optimum = []
-
-        high_low_temp = []
-
-        f = plt.figure(figsize=(14, 14))
-        gs = f.add_gridspec(2, 2)
 
         for index, x in enumerate(array):
             product = {}
@@ -787,51 +843,80 @@ def periodic_view(request):
             product["lead_time"] = x['lead_time']
             product["standar_deviasi"] = x['standar_deviasi']
             
-            high_low_temp.append([x['permintaan_baku'],x['permintaan_baku'],10])
+            mc_result, demand_result = monte_carlo(3000, product)
+            tp_list, to_list = mc_simulation(mc_result, 3000, simulation_num)
 
-            nilai_optimum = []
-            # for i in range(1,5):
-            tp_list = mc_simulation(product, 3000, 10)
-            mc_result = monte_carlo(3000, product)
-            # monte_carlo_product.append(monte_carlo(3000, product))
-            # for a in range(1,simulation_num+1):
-            #     periodic_review_temp = p_review(product, high_low_temp[index][0],high_low_temp[index][1],high_low_temp[index][2])
-            # review_product.append(periodic_review_temp)
-            # prod_review_temp = max(periodic_review_temp.items(), key=operator.itemgetter(1))
-            # review_optimum.append(p_review_optimum(product, prod_review_temp[0]))
-            # nilai_optimum.append(prod_review_temp[0])
+            # Mencari to paling minimal
+            to_min_index = tp_list.index(min(tp_list))
+            to_min = to_list[to_min_index]
 
-            biaya_penyimpanan = per_review(product)
+            # Mencari s dan S berdasarkan to paling minimal
+            R_min, s_min, S_min = find_rss(to_min, mc_result)
 
-            tp_list_product.append(tp_list)
-            temp = []
-            temp.append("Product ")
-            temp.append(np.mean(tp_list_product))
-            temp.append(np.std(tp_list_product))
-            simulation_biaya.append(temp)
+            # grafik demand
+            plt.hist(demand_result)
+            plt.xlabel('Jumlah Penjualan')
+            plt.ylabel('Frekuensi')
 
-            ax = f.add_subplot(gs[0, 0])
-            sns.distplot(tp_list_product,kde=False)
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            demand_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
+
+            # grafik biaya penyimpanan
+            plt.hist(tp_list)
+            plt.xlabel('Biaya Penyimpanan')
+            plt.ylabel('Frekuensi')
+
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            biaya_penyimpanan_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
+
+            # grafik inventory level
+            inventory_level_list = calculate_inv_level(demand_result, R_min, s_min, S_min)
+
+            fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(18,6))
+            plt.plot(inventory_level_list, linewidth = 1.5)
+            plt.axhline(S_min, linewidth=2, color="grey", linestyle=":")
+            plt.axhline(0, linewidth=2, color="grey", linestyle=":")
+            plt.xlim(0,365)
+            ax.set_ylabel('Inventory Level (units)', fontsize=18)
+            ax.set_xlabel('Day', fontsize=18)
+
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            inventory_level_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
             
             temp = {
-                # 'To': round(to),
-                # 's': round(s),
-                # 'S': round(S),
-                'mc_result': mc_result,
                 'nama_barang': product["nama_barang"],
-                'biaya_penyimpanan': round(biaya_penyimpanan),
-                'total_biaya_penyimpanan': round(min(tp_list)),
+
+                'R': round(R_min),
+                's': round(s_min),
+                'S': round(S_min),
+
+                'biaya_penyimpanan_min': round(min(tp_list)),
+                'biaya_penyimpanan_mean': round(np.mean(tp_list)),
+                'biaya_penyimpanan_std': round(np.std(tp_list)),
+
+                'demand_plot': demand_plot,
+                'biaya_penyimpanan_plot': biaya_penyimpanan_plot,
+                'inventory_level_plot': inventory_level_plot,
+
+                'mc_result': mc_result,
+                'demand_result': demand_result,
+                'biaya_penyimpanan': 0,
+                'total_biaya_penyimpanan': round(to_min, 4),
             }
 
             data.append(temp)
-
-        flike = io.BytesIO()
-        f.savefig(flike)
-        simulation_profit_plot = base64.b64encode(flike.getvalue()).decode()
-        
+                
         context = {
             'data': data,
-            'simulation_profit_plot': simulation_profit_plot
         }
 
         return render(request, 'periodic/calculation.html', context)
