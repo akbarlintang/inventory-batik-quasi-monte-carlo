@@ -822,8 +822,10 @@ def periodic_view(request):
             array.append(array_data)
 
         # define var
-        iteration_h = 100
-        simulation_num = 100
+        # iteration_h = 100
+        # simulation_num = 100
+        iteration_h = int(request.POST['halton_iteration'])
+        simulation_num = int(request.POST['simulation'])
 
         global iteration_halton
         global halton_result
