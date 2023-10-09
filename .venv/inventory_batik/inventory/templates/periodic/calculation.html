@@ -7,6 +7,8 @@
 
 {% load static %}
 
+{% load humanize %}
+
 {% endblock stylesheets %}
 
 {% block content %}
@@ -33,45 +35,112 @@
 
         <br>
         
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th width="5%" class="text-center">No.</th>
-                    <th width="20%" class="text-center">Nama Barang</th>
-                    <th width="45%" class="text-center">Reorder Point (s)</th>
-                    <th width="20%" class="text-center">Stok Maksimum (S)</th>
-                    <th width="20%" class="text-center">Review Interval (R) (hari)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if data %}
+        <!-- Tabel RsS periodic review -->
+        <div>
+            <!-- <h4>Hasil RsS Periodic Review</h4> -->
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Nama Barang</th>
+                        <th width="20%" class="text-center">Reorder Point (s)</th>
+                        <th width="20%" class="text-center">Stok Maksimum (S)</th>
+                        <th width="20%" class="text-center">Review Interval (R)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-center">{{ dt.s }} Pcs</td>
+                                <td class="text-center">{{ dt.S }} Pcs</td>
+                                <td class="text-center">{{ dt.R }} Hari</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data tidak ditemukan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Plotting penjualan -->
+        <div class="mt-6">
+            <h4>Plot Penjualan</h4>
+            <div class="row">
                 {% for dt in data %}
-                <tr>
-                    <td class="text-center">{{ forloop.counter }}</td>
-                    <!-- <td>{{ dt.nama_barang }}</td>
-                    <td class="text-center">{{ dt.s }}</td>
-                    <td class="text-center">{{ dt.S }}</td>
-                    <td class="text-center">{{ dt.To }}</td> -->
-                    <td>{{ dt.nama_barang }}</td>
-                    <td class="text-center">{{ dt.mc_result }}</td>
-                    <td class="text-center">{{ dt.total_biaya_penyimpanan }}</td>
-                    <td class="text-center">Rp {{ dt.biaya_penyimpanan }}</td>
-                </tr>
+                    <div class="col-6 mt-3">
+                        <h5>{{ dt.nama_barang }}</h5>
+                        <div>
+                            <img class="img-fluid" src='data:image/png;base64,{{ dt.demand_plot }}'>
+                        </div>
+                    </div>
                 {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="5">Data tidak ditemukan.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
+            </div>
+        </div>
 
-        <!-- {% for dt in data %} -->
-            <!-- <div>
-                {{ dt.nilai_optimum }}
-            </div> -->
-            <img class="responsive-img" src='data:image/png;base64,{{ simulation_profit_plot }}'>
-        <!-- {% endfor %} -->
+        <!-- Tabel list biaya penyimpanan -->
+        <div class="mt-6">
+            <h4>List Biaya Penyimpanan</h4>
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th width="5%" class="text-center">No.</th>
+                        <th class="text-center">Nama Barang</th>
+                        <th width="20%" class="text-center">Minimum</th>
+                        <th width="20%" class="text-center">Mean</th>
+                        <th width="20%" class="text-center">Std</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if data %}
+                        {% for dt in data %}
+                            <tr>
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td>{{ dt.nama_barang }}</td>
+                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_min|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_mean|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_std|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5">Data tidak ditemukan.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Plotting biaya penyimpanan -->
+        <div class="mt-6">
+            <h4>Plot Biaya Penyimpanan</h4>
+            <div class="row">
+                {% for dt in data %}
+                    <div class="col-6 mt-3">
+                        <h5>{{ dt.nama_barang }}</h5>
+                        <img class="img-fluid" src='data:image/png;base64,{{ dt.biaya_penyimpanan_plot }}'>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Plotting biaya penyimpanan -->
+        <div class="mt-6">
+            <h4>Plot Inventory Level</h4>
+            <div>
+                {% for dt in data %}
+                    <div class="mt-3">
+                        <h5>{{ dt.nama_barang }}</h5>
+                        <img class="img-fluid" src='data:image/png;base64,{{ dt.inventory_level_plot }}'>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 
