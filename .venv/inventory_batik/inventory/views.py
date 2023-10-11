@@ -544,13 +544,16 @@ def export_view(request):
             biaya_kekurangan = (item.price * 7.5 / 100) + item.price
             n = len(sales_list)
             if n < 2:
-                standar_deviasi = sales_list[0]
+                if not sales:
+                    standar_deviasi = 1
+                else:
+                    standar_deviasi = sales[0].amount
             else:
                 # standar_deviasi = stdev(sales_list)
                 standar_deviasi = np.std(sales_list)
             
             # Write row excel
-            row = [idx+1, item.name, item.biaya_pesan, sales_count, 225805, biaya_kekurangan, item.price, item.lead_time, standar_deviasi]
+            row = [idx+1, item.name, item.biaya_pesan, sales_count, 100000, biaya_kekurangan, item.price, item.lead_time, standar_deviasi]
             writer.writerow(row)
         return response
     
@@ -607,7 +610,7 @@ def daily_demand(mean, sd):
     else:
         return np.random.normal(mean, sd)
     
-def monte_carlo(M, product, review_period=30):
+def monte_carlo(product, review_period=30):
     product_mc = {}
     product_mc["nama_barang"] = product['nama_barang']
     product_mc["biaya_pesan"] = product['biaya_pesan']
@@ -625,7 +628,7 @@ def monte_carlo(M, product, review_period=30):
 
     total_demand = 0
 
-    for day in range(1, 365):
+    for day in range(1, 180):
         day_demand = round(daily_demand(mean, sd))
 
         if day_demand > 0:
@@ -635,54 +638,27 @@ def monte_carlo(M, product, review_period=30):
             demand_list.append(0)
 
     product_mc["permintaan_baku"] = total_demand
+    product_mc["standar_deviasi"] = np.std(demand_list)
     
     return product_mc, demand_list
 
-def calculate_profit(data, product):
-    unit_cost = product["harga_produk"]
-    selling_price = product["harga_produk"]
-    holding_cost = product["biaya_simpan"]
-    order_cost = product["biaya_pesan"]
-    days = 150
-
-    revenue = sum(data['units_sold']) * selling_price
-    Co = len(data['orders']) * order_cost
-    # Ch = sum(data['inv_level']) * holding_cost * size * (1 / days)
-    Ch = sum(data['inv_level']) * holding_cost * (1 / days)
-    cost = sum(data['orders']) * unit_cost
-
-    profit = revenue - cost - Co - Ch
-
-    return profit
-
-def mc_simulation(product, M, num_simulations):
+def mc_simulation(product, num_simulations):
     total_biaya_penyimpanan_list = []
     to_penyimpanan_list = []
+    data_list = []
+    demand_result_list = []
     for sim in range(num_simulations):
-        data, demand_result = monte_carlo(M, product)
+        data, demand_result = monte_carlo(product)
 
         # Calculating total biaya penyimpanan
         total_biaya_penyimpanan, to_penyimpanan = per_review(data)
+
         total_biaya_penyimpanan_list.append(round(total_biaya_penyimpanan))
         to_penyimpanan_list.append(to_penyimpanan)
+        data_list.append(data)
+        demand_result_list.append(demand_result)
 
-    return total_biaya_penyimpanan_list, to_penyimpanan_list
-
-def p_review(product, low, high, step=50):
-    m_range = [i for i in range(low, high, step)]
-    review_dict = {}
-    for M in m_range:
-        p_list, o_list = mc_simulation(product, M)
-        review_dict[M] = (np.mean(p_list), np.quantile(p_list, 0.05), np.quantile(p_list, 0.95), np.std(p_list), np.mean(o_list))
-
-    return review_dict
-
-def p_review_optimum(product, M, sim=10):
-    review_dict = {}
-    p_list, o_list = mc_simulation(product, M, sim)
-    review_dict[M] = (np.mean(p_list), np.quantile(p_list, 0.05), np.quantile(p_list, 0.95), np.std(p_list), np.mean(o_list))
-
-    return review_dict
+    return total_biaya_penyimpanan_list, to_penyimpanan_list, data_list, demand_result_list
 
 def per_review(product):
     T_temp = []
@@ -690,6 +666,7 @@ def per_review(product):
     s_temp = []
     S_temp = []
     # for i in range(5):
+
     # Hitung nilai To
     to = math.sqrt((2 * product["biaya_pesan"]) / (product["permintaan_baku"] * product["biaya_simpan"]))
 
@@ -738,6 +715,7 @@ def per_review(product):
     return T, to
 
 def find_rss(to, product):
+
     # Hitung nilai alpha dan R
     alpha = to * product["biaya_simpan"] / product["biaya_kekurangan"]
     z_alpha = round((NormalDist().inv_cdf(alpha) * -1), 2)
@@ -766,11 +744,42 @@ def find_rss(to, product):
 
     So = round(XRL + (k * sigma_RL))
 
-    R = round(to * 1000)
+    S_list = [round(Sp + Qp), round(So)]
+    
+    R_to = round(to * 1000)
     s = round(Sp)
-    S = round(Sp + Qp)
+    S = min(S_list)
 
-    return R, s, S
+    return R_to, s, S
+
+def calculate_inventory_cost(product_list, to_list):
+    inventory_cost_list = []
+
+    for x, product in enumerate(product_list):
+        A = product["biaya_pesan"]
+        D = product["permintaan_baku"] / 6
+        vr = product["biaya_simpan"]
+        k = round(product["biaya_simpan"] / (product["biaya_simpan"] + product["biaya_kekurangan"]), 2)
+        sigma_RL = (to_list[x] + product["lead_time"]) * product["standar_deviasi"]
+        B3 = product["biaya_kekurangan"]
+
+        # Mencari Q
+        Q = math.sqrt((2 * A * D) / vr)
+
+        # Mencari total biaya pesan
+        biaya_pesan = (A * D) / Q
+
+        # Mencari total biaya simpan
+        biaya_simpan = ((Q / 2) + (k * sigma_RL) * vr)
+
+        # Mencari total biaya kekurangan
+        biaya_kekurangan = (B3 * sigma_RL * 0.216 * D) / Q
+
+        # Hitung ongkos total dan masukkan ke dalam list
+        ongkos_total = biaya_pesan + biaya_simpan + biaya_kekurangan
+        inventory_cost_list.append(ongkos_total)
+    
+    return inventory_cost_list
 
 def calculate_inv_level(demand_result, R_min, s_min, S_min):
     inventory_level = []
@@ -792,8 +801,9 @@ def calculate_inv_level(demand_result, R_min, s_min, S_min):
         if counter == R_min:
             # Restocking day
             if stock <= s_min:
-                stock = s_min
-                counter = 0
+                stock = S_min
+            
+            counter = 0
         
         inventory_level.append(stock)
     
@@ -845,35 +855,42 @@ def periodic_view(request):
             product["lead_time"] = x['lead_time']
             product["standar_deviasi"] = x['standar_deviasi']
             
-            mc_result, demand_result = monte_carlo(3000, product)
-            tp_list, to_list = mc_simulation(mc_result, 3000, simulation_num)
+            # mc_result, demand_result = monte_carlo(3000, product)
+            tp_list, to_list, data_list, demand_result_list = mc_simulation(product, simulation_num)
+
+
+            # grafik biaya inventory
+            # plt.hist(tp_list)
+            inventory_cost_list = calculate_inventory_cost(data_list, to_list)
+            plt.hist(inventory_cost_list)
+            plt.xlabel('Inventory Cost')
+            plt.ylabel('Frequency')
+
+            flike = io.BytesIO()
+            plt.savefig(flike)
+            biaya_inventory_plot = base64.b64encode(flike.getvalue()).decode()
+            plt.switch_backend('agg')
+            plt.clf()
 
             # Mencari to paling minimal
-            to_min_index = tp_list.index(min(tp_list))
+            to_min_index = inventory_cost_list.index(min(inventory_cost_list))
             to_min = to_list[to_min_index]
+
+            mc_result = data_list[to_min_index]
+            demand_result = demand_result_list[to_min_index]
 
             # Mencari s dan S berdasarkan to paling minimal
             R_min, s_min, S_min = find_rss(to_min, mc_result)
 
             # grafik demand
-            plt.hist(demand_result)
-            plt.xlabel('Jumlah Penjualan')
-            plt.ylabel('Frekuensi')
+            demand_result_filtered = [i for i in demand_result if i != 0]
+            plt.hist(demand_result_filtered)
+            plt.xlabel('Demand')
+            plt.ylabel('Frequency')
 
             flike = io.BytesIO()
             plt.savefig(flike)
             demand_plot = base64.b64encode(flike.getvalue()).decode()
-            plt.switch_backend('agg')
-            plt.clf()
-
-            # grafik biaya penyimpanan
-            plt.hist(tp_list)
-            plt.xlabel('Biaya Penyimpanan')
-            plt.ylabel('Frekuensi')
-
-            flike = io.BytesIO()
-            plt.savefig(flike)
-            biaya_penyimpanan_plot = base64.b64encode(flike.getvalue()).decode()
             plt.switch_backend('agg')
             plt.clf()
 
@@ -884,7 +901,7 @@ def periodic_view(request):
             plt.plot(inventory_level_list, linewidth = 1.5)
             plt.axhline(S_min, linewidth=2, color="grey", linestyle=":")
             plt.axhline(0, linewidth=2, color="grey", linestyle=":")
-            plt.xlim(0,365)
+            plt.xlim(0,180)
             ax.set_ylabel('Inventory Level (units)', fontsize=18)
             ax.set_xlabel('Day', fontsize=18)
 
@@ -901,12 +918,12 @@ def periodic_view(request):
                 's': round(s_min),
                 'S': round(S_min),
 
-                'biaya_penyimpanan_min': round(min(tp_list)),
-                'biaya_penyimpanan_mean': round(np.mean(tp_list)),
-                'biaya_penyimpanan_std': round(np.std(tp_list)),
+                'biaya_inventory_min': round(min(inventory_cost_list)),
+                'biaya_inventory_mean': round(np.mean(inventory_cost_list)),
+                'biaya_inventory_std': round(np.std(inventory_cost_list)),
 
                 'demand_plot': demand_plot,
-                'biaya_penyimpanan_plot': biaya_penyimpanan_plot,
+                'biaya_inventory_plot': biaya_inventory_plot,
                 'inventory_level_plot': inventory_level_plot,
 
                 'mc_result': mc_result,

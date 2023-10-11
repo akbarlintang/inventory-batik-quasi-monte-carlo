@@ -42,9 +42,9 @@
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No.</th>
-                        <th class="text-center">Nama Barang</th>
+                        <th class="text-center">Product Name</th>
                         <th width="20%" class="text-center">Reorder Point (s)</th>
-                        <th width="20%" class="text-center">Stok Maksimum (S)</th>
+                        <th width="20%" class="text-center">Maximum Stock (S)</th>
                         <th width="20%" class="text-center">Review Interval (R)</th>
                     </tr>
                 </thead>
@@ -56,7 +56,7 @@
                                 <td>{{ dt.nama_barang }}</td>
                                 <td class="text-center">{{ dt.s }} Pcs</td>
                                 <td class="text-center">{{ dt.S }} Pcs</td>
-                                <td class="text-center">{{ dt.R }} Hari</td>
+                                <td class="text-center">{{ dt.R }} Day(s)</td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -70,7 +70,7 @@
         
         <!-- Plotting penjualan -->
         <div class="mt-6">
-            <h4>Plot Penjualan</h4>
+            <h4>Simulation Demand Plot</h4>
             <div class="row">
                 {% for dt in data %}
                     <div class="col-6 mt-3">
@@ -83,14 +83,14 @@
             </div>
         </div>
 
-        <!-- Tabel list biaya penyimpanan -->
+        <!-- Tabel list biaya inventory -->
         <div class="mt-6">
-            <h4>List Biaya Penyimpanan</h4>
+            <h4>Simulation Inventory Cost List</h4>
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th width="5%" class="text-center">No.</th>
-                        <th class="text-center">Nama Barang</th>
+                        <th class="text-center">Product Name</th>
                         <th width="20%" class="text-center">Minimum</th>
                         <th width="20%" class="text-center">Mean</th>
                         <th width="20%" class="text-center">Std</th>
@@ -102,9 +102,9 @@
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
                                 <td>{{ dt.nama_barang }}</td>
-                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_min|intcomma }}</td>
-                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_mean|intcomma }}</td>
-                                <td class="text-right">Rp {{ dt.biaya_penyimpanan_std|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.biaya_inventory_min|intcomma }}</td>
+                                <td class="text-right">Rp {{ dt.biaya_inventory_mean|intcomma }}</td>
+                                <td class="text-right">{{ dt.biaya_inventory_std|intcomma }}</td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -116,22 +116,22 @@
             </table>
         </div>
 
-        <!-- Plotting biaya penyimpanan -->
+        <!-- Plotting biaya inventory -->
         <div class="mt-6">
-            <h4>Plot Biaya Penyimpanan</h4>
+            <h4>Simulation Inventory Cost Plot</h4>
             <div class="row">
                 {% for dt in data %}
                     <div class="col-6 mt-3">
                         <h5>{{ dt.nama_barang }}</h5>
-                        <img class="img-fluid" src='data:image/png;base64,{{ dt.biaya_penyimpanan_plot }}'>
+                        <img class="img-fluid" src='data:image/png;base64,{{ dt.biaya_inventory_plot }}'>
                     </div>
                 {% endfor %}
             </div>
         </div>
 
-        <!-- Plotting biaya penyimpanan -->
+        <!-- Plotting inventory level -->
         <div class="mt-6">
-            <h4>Plot Inventory Level</h4>
+            <h4>Simulation Inventory Level Plot</h4>
             <div>
                 {% for dt in data %}
                     <div class="mt-3">
