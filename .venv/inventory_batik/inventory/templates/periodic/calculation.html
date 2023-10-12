@@ -43,9 +43,10 @@
                     <tr>
                         <th width="5%" class="text-center">No.</th>
                         <th class="text-center">Product Name</th>
-                        <th width="20%" class="text-center">Reorder Point (s)</th>
-                        <th width="20%" class="text-center">Maximum Stock (S)</th>
-                        <th width="20%" class="text-center">Review Interval (R)</th>
+                        <th width="15%" class="text-center">Reorder Point (s)</th>
+                        <th width="15%" class="text-center">Maximum Stock (S)</th>
+                        <th width="15%" class="text-center">Review Interval (R)</th>
+                        <th width="15%" class="text-center">Lost Orders (Monthly)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,6 +58,7 @@
                                 <td class="text-center">{{ dt.s }} Pcs</td>
                                 <td class="text-center">{{ dt.S }} Pcs</td>
                                 <td class="text-center">{{ dt.R }} Day(s)</td>
+                                <td class="text-center">{{ dt.order_lost }} Unit(s)</td>
                             </tr>
                         {% endfor %}
                     {% else %}
@@ -70,7 +72,7 @@
         
         <!-- Plotting penjualan -->
         <div class="mt-6">
-            <h4>Simulation Demand Plot</h4>
+            <h4>Plot of Demand Simulation</h4>
             <div class="row">
                 {% for dt in data %}
                     <div class="col-6 mt-3">
@@ -85,7 +87,7 @@
 
         <!-- Tabel list biaya inventory -->
         <div class="mt-6">
-            <h4>Simulation Inventory Cost List</h4>
+            <h4>Inventory Cost</h4>
             <table class="table table-bordered table-striped">
                 <thead>
                     <tr>
@@ -137,6 +139,19 @@
                     <div class="mt-3">
                         <h5>{{ dt.nama_barang }}</h5>
                         <img class="img-fluid" src='data:image/png;base64,{{ dt.inventory_level_plot }}'>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Plotting inventory level -->
+        <div class="mt-6">
+            <h4>Simulation Orders Lost Plot</h4>
+            <div class="row">
+                {% for dt in data %}
+                    <div class="col-6 mt-3">
+                        <h5>{{ dt.nama_barang }}</h5>
+                        <img class="img-fluid" src='data:image/png;base64,{{ dt.simulation_lost_plot }}'>
                     </div>
                 {% endfor %}
             </div>
